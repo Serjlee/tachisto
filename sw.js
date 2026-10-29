@@ -1,7 +1,7 @@
 // Service worker: rende l'app utilizzabile offline.
 // Strategia "stale-while-revalidate": risponde subito dalla cache e intanto
 // scarica la versione aggiornata, che verrà usata al caricamento successivo.
-const CACHE = 'tachisto-v1';
+const CACHE = 'tachisto-v2';
 const ASSETS = [
   './',
   'index.html',

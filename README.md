@@ -31,6 +31,23 @@ installare come app su tablet/telefono/computer.
 | `R` | ripeti la parola |
 | `Esc` | termina e mostra il riepilogo |
 
+## Uso sulla LIM
+
+L'app è pensata anche per lavagne interattive (LIM) e monitor touch:
+
+- tutto si fa con il dito o la penna: pulsanti −/+ grandi (tenere premuto per
+  scorrere i valori) e durate rapide (0,1 – 5 s), senza bisogno della tastiera;
+- durante la presentazione un tocco ovunque passa alla parola successiva; i
+  pulsanti grandi in basso (Ripeti / Sbagliata / Corretta / Avanti) compaiono
+  solo sullo schermo bianco di attesa; la ✕ in alto a destra termina;
+- la pressione lunga non apre menu e i doppi tocchi non selezionano il testo;
+- funziona con i telecomandi per presentazioni (avanti = parola successiva,
+  indietro = ripeti la parola);
+- lo schermo non va in standby durante la sessione (dove supportato).
+
+**Browser supportati:** Chrome/Edge 88+, Firefox 78+, Safari 14.1+ (dal 2021),
+quindi anche i PC di classe e le LIM Android non aggiornati di recente.
+
 ## Pubblicazione su GitHub Pages
 
 Il workflow `.github/workflows/pages.yml` esegue i test e pubblica il sito a ogni

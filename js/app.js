@@ -70,6 +70,16 @@ function applySettings() {
   $('#sizeOut').value = s.size;
   const sample = { syllables: 'ca', word: 'cane', letters: 'c' }[s.unit];
   $('#sample').textContent = applyCase(s, sample);
+
+  // stato usato dal CSS per mostrare/attenuare le opzioni pertinenti
+  form.dataset.unit = s.unit;
+  form.dataset.advance = s.advance;
+  for (const row of form.querySelectorAll('.option-row')) {
+    row.classList.toggle('off', !row.querySelector('input[type="checkbox"]').checked);
+  }
+  for (const btn of form.querySelectorAll('[data-preset]')) {
+    btn.setAttribute('aria-pressed', String(Number(btn.dataset.preset) === s.duration));
+  }
   return s;
 }
 
@@ -83,6 +93,66 @@ form.addEventListener('input', onSettingsInput);
 // associato al form con form="settings" ma fuori dal suo albero: l'evento non risale fino al form
 form.elements.namedItem('lineMode').addEventListener('input', onSettingsInput);
 form.addEventListener('submit', (e) => e.preventDefault());
+
+// ---------- Controlli per il tocco (LIM, tablet) ----------
+
+/** Imposta un valore numerico come se l'avesse scritto l'utente. */
+function setNumber(input, value) {
+  const min = Number.parseFloat(input.min);
+  const max = Number.parseFloat(input.max);
+  const clamped = Math.min(Number.isFinite(max) ? max : Infinity, Math.max(Number.isFinite(min) ? min : 0, value));
+  input.value = String(Number(clamped.toFixed(2)));
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function stepNumber(input, direction) {
+  const step = Number.parseFloat(input.step) || 1;
+  const current = Number.parseFloat(input.value.replace(',', '.'));
+  const base = Number.isFinite(current) ? current : Number.parseFloat(input.defaultValue);
+  setNumber(input, Math.round((base + direction * step) / step) * step);
+}
+
+// Pulsanti −/+ grandi accanto a ogni campo numerico; tenendoli premuti il
+// valore continua a cambiare. Vanno dopo l'input nel DOM (il CSS sposta il −
+// a sinistra), così l'etichetta <label> resta collegata all'input.
+for (const input of form.querySelectorAll('input[type="number"]')) {
+  const label = input.getAttribute('aria-label') || 'valore';
+  const plus = h('button', { type: 'button', className: 'step-btn step-up', textContent: '+', tabIndex: -1 });
+  const minus = h('button', { type: 'button', className: 'step-btn step-down', textContent: '−', tabIndex: -1 });
+  plus.setAttribute('aria-label', `Aumenta ${label}`);
+  minus.setAttribute('aria-label', `Diminuisci ${label}`);
+  input.after(plus);
+  input.after(minus);
+
+  for (const [btn, direction] of [[plus, 1], [minus, -1]]) {
+    let timer = null;
+    let repeated = false;
+    const stop = () => clearTimeout(timer);
+    btn.addEventListener('pointerdown', () => {
+      repeated = false;
+      stop();
+      const repeat = (delay) => {
+        timer = setTimeout(() => {
+          repeated = true;
+          stepNumber(input, direction);
+          repeat(70);
+        }, delay);
+      };
+      repeat(450);
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(type, stop);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    btn.addEventListener('click', () => {
+      if (!repeated) stepNumber(input, direction);
+      repeated = false;
+    });
+  }
+}
+
+form.addEventListener('click', (e) => {
+  const preset = e.target.closest('[data-preset]');
+  if (preset) setNumber(form.elements.namedItem('duration'), Number(preset.dataset.preset));
+});
 
 // ---------- Elenco parole ----------
 
@@ -184,8 +254,9 @@ $('#saveList').addEventListener('click', () => {
 deleteBtn.addEventListener('click', () => {
   const name = listSelect.value;
   if (!name || !confirm(`Eliminare la lista «${name}»?`)) return;
-  const { [name]: _removed, ...rest } = getLists();
-  store.set('lists', rest);
+  const lists = getLists();
+  delete lists[name];
+  store.set('lists', lists);
   renderLists();
 });
 
@@ -215,7 +286,7 @@ function startSession(words) {
     alert('Inserisci almeno una parola.');
     return;
   }
-  if (resultsDialog.open) resultsDialog.close();
+  closeResults();
   presentation.start();
 }
 
@@ -249,8 +320,25 @@ function showResults(session) {
 
   $('#retryWrong').disabled = wrong === 0;
   $('#copyResults').textContent = 'Copia';
-  resultsDialog.showModal();
+  openResults();
 }
+
+function openResults() {
+  resultsDialog.hidden = false;
+  $('#closeResults').focus();
+}
+
+function closeResults() {
+  resultsDialog.hidden = true;
+}
+
+$('#closeResults').addEventListener('click', closeResults);
+resultsDialog.addEventListener('click', (e) => {
+  if (e.target === resultsDialog) closeResults(); // tocco fuori dal riquadro
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !resultsDialog.hidden) closeResults();
+});
 
 $('#retryWrong').addEventListener('click', () => {
   startSession(lastSession.items.filter((item) => item.result === 'wrong').map((item) => item.raw));
@@ -284,13 +372,15 @@ renderPreview();
 // ---------- Funzionamento offline ----------
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  try {
-    await navigator.serviceWorker.register('sw.js');
-    await navigator.serviceWorker.ready;
-    const badge = $('#offlineStatus');
-    badge.value = '✓ Disponibile offline';
-    badge.hidden = false;
-  } catch {
-    // service worker non disponibile: l'app funziona comunque online
-  }
+  navigator.serviceWorker
+    .register('sw.js')
+    .then(() => navigator.serviceWorker.ready)
+    .then(() => {
+      const badge = $('#offlineStatus');
+      badge.value = '✓ Disponibile offline';
+      badge.hidden = false;
+    })
+    .catch(() => {
+      // service worker non disponibile: l'app funziona comunque online
+    });
 }

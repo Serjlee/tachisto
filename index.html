@@ -72,20 +72,31 @@
       </fieldset>
 
       <div class="grid">
-        <label class="field">
-          <span>
+        <div class="field wide">
+          <label for="duration">
             Durata
             <span class="when-syllables">di ogni sillaba</span><span class="when-word">della parola</span><span class="when-letters">di ogni lettera</span>
-          </span>
-          <span class="with-unit"><input type="number" name="duration" min="0.02" max="60" step="0.05" value="1"><em>s</em></span>
-        </label>
+          </label>
+          <div class="duration-row">
+            <span class="with-unit"><input type="number" inputmode="decimal" id="duration" name="duration" min="0.05" max="60" step="0.05" value="1"><em>s</em></span>
+            <div class="presets" role="group" aria-label="Durate rapide">
+              <button type="button" data-preset="0.1">0,1</button>
+              <button type="button" data-preset="0.2">0,2</button>
+              <button type="button" data-preset="0.5">0,5</button>
+              <button type="button" data-preset="1">1</button>
+              <button type="button" data-preset="2">2</button>
+              <button type="button" data-preset="3">3</button>
+              <button type="button" data-preset="5">5</button>
+            </div>
+          </div>
+        </div>
         <label class="field not-word">
           <span>Pausa vuota tra le <span class="when-letters">lettere</span><span class="when-syllables when-word">sillabe</span></span>
-          <span class="with-unit"><input type="number" name="gap" min="0" max="60" step="0.05" value="0"><em>s</em></span>
+          <span class="with-unit"><input type="number" inputmode="decimal" name="gap" min="0" max="60" step="0.05" value="0"><em>s</em></span>
         </label>
         <label class="field">
           <span>Schermo vuoto prima di ogni parola</span>
-          <span class="with-unit"><input type="number" name="preDelay" min="0" max="60" step="0.1" value="0.5"><em>s</em></span>
+          <span class="with-unit"><input type="number" inputmode="decimal" name="preDelay" min="0" max="60" step="0.1" value="0.5"><em>s</em></span>
         </label>
         <label class="field not-word">
           <span>Posizione sullo schermo</span>
@@ -99,11 +110,11 @@
       <div class="options">
         <div class="option-row">
           <label class="check"><input type="checkbox" name="fixation"> Punto di fissazione (+) prima della parola</label>
-          <span class="with-unit"><input type="number" name="fixationDur" min="0.1" max="60" step="0.1" value="1" aria-label="Durata punto di fissazione"><em>s</em></span>
+          <span class="with-unit"><input type="number" inputmode="decimal" name="fixationDur" min="0.1" max="60" step="0.1" value="1" aria-label="Durata punto di fissazione"><em>s</em></span>
         </div>
         <div class="option-row">
           <label class="check"><input type="checkbox" name="mask"> Maschera (#####) dopo la parola</label>
-          <span class="with-unit"><input type="number" name="maskDur" min="0.05" max="60" step="0.05" value="0.5" aria-label="Durata maschera"><em>s</em></span>
+          <span class="with-unit"><input type="number" inputmode="decimal" name="maskDur" min="0.05" max="60" step="0.05" value="0.5" aria-label="Durata maschera"><em>s</em></span>
         </div>
       </div>
 
@@ -117,7 +128,7 @@
         </label>
         <label class="field auto-only">
           <span>Attesa prima della successiva</span>
-          <span class="with-unit"><input type="number" name="autoDelay" min="0" max="120" step="0.5" value="3"><em>s</em></span>
+          <span class="with-unit"><input type="number" inputmode="decimal" name="autoDelay" min="0" max="120" step="0.5" value="3"><em>s</em></span>
         </label>
         <label class="field">
           <span>Ordine</span>
@@ -167,13 +178,14 @@
       <details class="help">
         <summary>Comandi durante la presentazione</summary>
         <dl>
-          <dt><kbd>Spazio</kbd> / <kbd>Invio</kbd> / tocco</dt><dd>parola successiva</dd>
+          <dt>Tocco sullo schermo / <kbd>Spazio</kbd> / <kbd>Invio</kbd></dt><dd>parola successiva</dd>
           <dt><kbd>C</kbd></dt><dd>segna come corretta e vai avanti</dd>
           <dt><kbd>S</kbd></dt><dd>segna come sbagliata e vai avanti</dd>
           <dt><kbd>R</kbd></dt><dd>ripeti la parola</dd>
+          <dt>Telecomando per presentazioni</dt><dd>avanti = parola successiva, indietro = ripeti</dd>
           <dt><kbd>Esc</kbd></dt><dd>termina e mostra il riepilogo</dd>
         </dl>
-        <p class="muted">I pulsanti in basso compaiono solo sullo schermo bianco di attesa.</p>
+        <p class="muted">Sulla LIM usa i pulsanti in basso (compaiono sullo schermo bianco di attesa) e la ✕ in alto a destra per uscire.</p>
       </details>
     </section>
   </main>
@@ -196,18 +208,18 @@
     </div>
   </div>
 
-  <dialog id="results">
-    <form method="dialog">
-      <h2>Riepilogo</h2>
+  <div id="results" class="modal" role="dialog" aria-modal="true" aria-labelledby="resultsTitle" hidden>
+    <div class="modal-box">
+      <h2 id="resultsTitle">Riepilogo</h2>
       <div id="stats" class="stats"></div>
       <ol id="resultList" class="result-list"></ol>
       <div class="dialog-actions">
         <button type="button" id="retryWrong" class="btn">Ripeti le sbagliate</button>
         <button type="button" id="restart" class="btn">Ricomincia</button>
         <button type="button" id="copyResults" class="btn ghost">Copia</button>
-        <button class="btn primary">Chiudi</button>
+        <button type="button" id="closeResults" class="btn primary">Chiudi</button>
       </div>
-    </form>
-  </dialog>
+    </div>
+  </div>
 </body>
 </html>
