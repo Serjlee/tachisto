@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tachistoscopio Online</title>
+  <meta name="description" content="Tachistoscopio online: presenta parole divise in sillabe con tempi di esposizione regolabili. Funziona anche offline.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="icons/icon.svg" alt="" width="40" height="40">
+      <div>
+        <h1>Tachistoscopio Online</h1>
+        <p class="subtitle">Parole divise in sillabe, con tempi di esposizione regolabili</p>
+      </div>
+    </div>
+    <output id="offlineStatus" class="badge" hidden></output>
+  </header>
+
+  <main class="layout">
+    <section class="card words" aria-labelledby="wordsTitle">
+      <h2 id="wordsTitle">Parole</h2>
+
+      <div class="list-tools">
+        <select id="savedLists" aria-label="Liste salvate">
+          <option value="">Liste salvate…</option>
+        </select>
+        <button type="button" id="saveList" class="btn small">Salva lista</button>
+        <button type="button" id="deleteList" class="btn small ghost" disabled>Elimina</button>
+        <label class="btn small ghost file-btn">
+          Importa .txt
+          <input type="file" id="importFile" accept=".txt,text/plain">
+        </label>
+      </div>
+
+      <textarea id="words" spellcheck="false" autocapitalize="characters" aria-label="Elenco parole"
+        placeholder="CANE&#10;GATTO&#10;TAVOLO&#10;BA-U-LE"></textarea>
+
+      <label class="check">
+        <input type="checkbox" name="lineMode" form="settings">
+        Ogni riga è un elemento (permette brevi frasi, es. «il cane»)
+      </label>
+
+      <p class="hint">
+        Separa le parole andando a capo, con virgole o spazi. La divisione in sillabe è automatica;
+        per deciderla tu usa il trattino: <code>BA-U-LE</code>.
+      </p>
+
+      <div class="preview-head">
+        <h3>Anteprima divisione</h3>
+        <output id="wordCount" class="muted"></output>
+      </div>
+      <div id="preview" class="chips"></div>
+    </section>
+
+    <form id="settings" class="card" aria-labelledby="settingsTitle">
+      <h2 id="settingsTitle">Impostazioni</h2>
+
+      <fieldset class="segmented">
+        <legend>Mostra</legend>
+        <label><input type="radio" name="unit" value="syllables" checked><span>Sillabe</span></label>
+        <label><input type="radio" name="unit" value="word"><span>Parola intera</span></label>
+        <label><input type="radio" name="unit" value="letters"><span>Lettere</span></label>
+      </fieldset>
+
+      <div class="grid">
+        <label class="field">
+          <span>
+            Durata
+            <span class="when-syllables">di ogni sillaba</span><span class="when-word">della parola</span><span class="when-letters">di ogni lettera</span>
+          </span>
+          <span class="with-unit"><input type="number" name="duration" min="0.02" max="60" step="0.05" value="1"><em>s</em></span>
+        </label>
+        <label class="field not-word">
+          <span>Pausa vuota tra le <span class="when-letters">lettere</span><span class="when-syllables when-word">sillabe</span></span>
+          <span class="with-unit"><input type="number" name="gap" min="0" max="60" step="0.05" value="0"><em>s</em></span>
+        </label>
+        <label class="field">
+          <span>Schermo vuoto prima di ogni parola</span>
+          <span class="with-unit"><input type="number" name="preDelay" min="0" max="60" step="0.1" value="0.5"><em>s</em></span>
+        </label>
+        <label class="field not-word">
+          <span>Posizione sullo schermo</span>
+          <select name="position">
+            <option value="center">Al centro</option>
+            <option value="real">Posizione reale nella parola</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="options">
+        <div class="option-row">
+          <label class="check"><input type="checkbox" name="fixation"> Punto di fissazione (+) prima della parola</label>
+          <span class="with-unit"><input type="number" name="fixationDur" min="0.1" max="60" step="0.1" value="1" aria-label="Durata punto di fissazione"><em>s</em></span>
+        </div>
+        <div class="option-row">
+          <label class="check"><input type="checkbox" name="mask"> Maschera (#####) dopo la parola</label>
+          <span class="with-unit"><input type="number" name="maskDur" min="0.05" max="60" step="0.05" value="0.5" aria-label="Durata maschera"><em>s</em></span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <label class="field">
+          <span>Dopo la parola</span>
+          <select name="advance">
+            <option value="wait">Attendi la risposta</option>
+            <option value="auto">Vai avanti da solo</option>
+          </select>
+        </label>
+        <label class="field auto-only">
+          <span>Attesa prima della successiva</span>
+          <span class="with-unit"><input type="number" name="autoDelay" min="0" max="120" step="0.5" value="3"><em>s</em></span>
+        </label>
+        <label class="field">
+          <span>Ordine</span>
+          <select name="order">
+            <option value="list">Come nell'elenco</option>
+            <option value="random">Casuale</option>
+          </select>
+        </label>
+      </div>
+
+      <h3>Aspetto</h3>
+      <div class="grid">
+        <label class="field">
+          <span>Lettere</span>
+          <select name="case">
+            <option value="upper">MAIUSCOLO</option>
+            <option value="lower">minuscolo</option>
+            <option value="asis">Come scritte</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Carattere</span>
+          <select name="font">
+            <option value="sans">Senza grazie (Arial)</option>
+            <option value="verdana">Verdana</option>
+            <option value="serif">Con grazie (Times)</option>
+            <option value="mono">Monospaziato</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Dimensione <output id="sizeOut"></output></span>
+          <input type="range" name="size" min="5" max="40" step="1" value="18">
+        </label>
+        <div class="field colors">
+          <label><span>Testo</span><input type="color" name="fg" value="#000000"></label>
+          <label><span>Sfondo</span><input type="color" name="bg" value="#ffffff"></label>
+        </div>
+      </div>
+
+      <div class="sample" aria-hidden="true"><span id="sample">CA</span></div>
+
+      <label class="check"><input type="checkbox" name="fullscreen" checked> Usa lo schermo intero</label>
+    </form>
+
+    <section class="card start-card">
+      <button type="button" id="startBtn" class="btn primary big">▶ Avvia</button>
+      <details class="help">
+        <summary>Comandi durante la presentazione</summary>
+        <dl>
+          <dt><kbd>Spazio</kbd> / <kbd>Invio</kbd> / tocco</dt><dd>parola successiva</dd>
+          <dt><kbd>C</kbd></dt><dd>segna come corretta e vai avanti</dd>
+          <dt><kbd>S</kbd></dt><dd>segna come sbagliata e vai avanti</dd>
+          <dt><kbd>R</kbd></dt><dd>ripeti la parola</dd>
+          <dt><kbd>Esc</kbd></dt><dd>termina e mostra il riepilogo</dd>
+        </dl>
+        <p class="muted">I pulsanti in basso compaiono solo sullo schermo bianco di attesa.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer muted">
+    Funziona anche senza connessione dopo il primo caricamento. Parole e impostazioni restano salvate su questo dispositivo.
+  </footer>
+
+  <!-- Schermo di presentazione -->
+  <div id="stage" tabindex="-1" hidden>
+    <div id="display"></div>
+    <p id="stageMessage"></p>
+    <button type="button" class="stage-exit" data-action="exit" aria-label="Termina">✕</button>
+    <div id="controls">
+      <output id="counter"></output>
+      <button type="button" data-action="repeat" title="Ripeti (R)">↺ Ripeti</button>
+      <button type="button" data-action="wrong" class="wrong" title="Sbagliata (S)">✗ Sbagliata</button>
+      <button type="button" data-action="right" class="right" title="Corretta (C)">✓ Corretta</button>
+      <button type="button" data-action="next" title="Avanti (Spazio)">Avanti →</button>
+    </div>
+  </div>
+
+  <dialog id="results">
+    <form method="dialog">
+      <h2>Riepilogo</h2>
+      <div id="stats" class="stats"></div>
+      <ol id="resultList" class="result-list"></ol>
+      <div class="dialog-actions">
+        <button type="button" id="retryWrong" class="btn">Ripeti le sbagliate</button>
+        <button type="button" id="restart" class="btn">Ricomincia</button>
+        <button type="button" id="copyResults" class="btn ghost">Copia</button>
+        <button class="btn primary">Chiudi</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
